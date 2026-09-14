@@ -219,6 +219,38 @@ def test_legacy_account_can_log_in_through_pages(app, client, legacy_account):
 # ------------------------------------------------------------ error pages
 
 
+def test_flashes_accumulate_across_redirects_without_render(client, member_account):
+    """Regression: two flashes queued without a page render in between
+    must BOTH survive in the session cookie (nested-mutation bug)."""
+    token = csrf_token_from(client.get("/login").text)
+
+    # Login, but do not follow the redirect -> "Welcome back" stays queued.
+    login = client.post(
+        "/login",
+        data={
+            "username": member_account["username"],
+            "password": member_account["password"],
+            "_csrf": token,
+            "next": "/account",
+        },
+        follow_redirects=False,
+    )
+    assert login.status_code == 303
+
+    # Member hits an admin-only page -> second flash queued, still no render.
+    denied = client.get("/admin", follow_redirects=False)
+    assert denied.status_code == 303
+
+    # The next rendered page must show BOTH messages exactly once.
+    page = client.get("/account")
+    assert "Welcome back" in page.text
+    assert "Access denied. Admins only." in page.text
+
+    # And they are consumed: a second render shows neither.
+    page_again = client.get("/account")
+    assert "Access denied" not in page_again.text
+
+
 def test_unknown_page_renders_html_404(client):
     response = client.get("/definitely-not-a-page")
     assert response.status_code == 404
