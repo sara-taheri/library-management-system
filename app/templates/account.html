@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My account &middot; Library Management System{% endblock %}
+{% block content %}
+<h1 class="page-title">My account</h1>
+
+<div class="grid-2">
+  <div class="card">
+    <h2>Profile</h2>
+    <table class="kv">
+      <tr><th>Username</th><td>{{ current_user.username }}</td></tr>
+      <tr><th>Email</th><td>{{ current_user.email or '&mdash;' }}</td></tr>
+      <tr><th>Role</th><td><span class="badge badge-{{ current_user.role }}">{{ current_user.role }}</span></td></tr>
+      <tr><th>Member since</th><td>{{ current_user.created_at.strftime('%Y-%m-%d') }}</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h2>Security</h2>
+    <p>Your password is stored using <strong>bcrypt</strong> hashing. Accounts migrated from
+       the legacy system are upgraded automatically at login.</p>
+    <p class="muted small">Password change and email verification arrive in a later phase.</p>
+  </div>
+</div>
+
+<h2>Currently borrowed</h2>
+<div class="card empty-state">
+  <p class="empty-icon" aria-hidden="true">&#128237;</p>
+  <p>No loans yet &mdash; the borrowing feature arrives in Phase 5.</p>
+</div>
+
+<h2>Upcoming schedule</h2>
+<div class="card empty-state">
+  <p class="empty-icon" aria-hidden="true">&#128197;</p>
+  <p>Nothing scheduled &mdash; the calendar arrives in Phase 7.</p>
+</div>
+{% endblock %}
