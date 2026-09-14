@@ -25,8 +25,12 @@ class Settings(BaseSettings):
     app_name: str = "Library Management System"
     environment: str = "development"  # development | production
 
-    # Used to sign session cookies starting in Phase 3 (authentication).
+    # Used to sign session cookies (Starlette SessionMiddleware).
     secret_key: str = "dev-insecure-change-me"
+
+    # Session cookie settings.
+    session_cookie_name: str = "lms_session"
+    session_max_age_days: int = 7
 
     # SQLAlchemy database URL. Default: SQLite file under <repo>/data/.
     database_url: str = f"sqlite:///{DEFAULT_DB_PATH}"
