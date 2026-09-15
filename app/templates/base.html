@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Library Management System{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">&#128218;</span> Library<span class="brand-accent">MS</span></a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/api/books">Catalog&nbsp;API</a>
+        {% if current_user %}
+          <a href="/account">Dashboard</a>
+          {% if current_user.is_admin %}<a href="/admin">Admin</a>{% endif %}
+          <form method="post" action="/logout" class="nav-form">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-ghost btn-sm">Log out <span class="muted">({{ current_user.username }})</span></button>
+          </form>
+        {% else %}
+          <a href="/login">Log in</a>
+          <a href="/register" class="btn btn-primary btn-sm">Sign up</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    {% for f in flashes %}
+      <div class="alert alert-{{ f.category }}" role="alert">{{ f.message }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container muted">
+      Library Management System &middot; Phase 3 (Authentication) &middot;
+      <a href="/docs">API docs</a> &middot; <a href="/health">status</a>
+    </div>
+  </footer>
+</body>
+</html>

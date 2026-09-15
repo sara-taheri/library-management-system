@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Admin &middot; Library Management System{% endblock %}
+{% block content %}
+<h1 class="page-title">Admin overview</h1>
+
+<div class="stats-grid">
+  <div class="card stat"><span class="stat-value">{{ stats.users }}</span><span class="stat-label">Members</span></div>
+  <div class="card stat"><span class="stat-value">{{ stats.books }}</span><span class="stat-label">Book titles</span></div>
+  <div class="card stat"><span class="stat-value">{{ stats.loans_active }}</span><span class="stat-label">Active loans</span></div>
+  <div class="card stat"><span class="stat-value">{{ stats.loans_total }}</span><span class="stat-label">Loans total</span></div>
+  <div class="card stat"><span class="stat-value">{{ stats.events }}</span><span class="stat-label">Calendar events</span></div>
+</div>
+
+<div class="card">
+  <h2>Tools</h2>
+  <p class="muted">Member management, book CRUD screens and moderation tools arrive in Phases 4&ndash;6.
+     Programmatic access is already available via the <a href="/docs">API docs</a>
+     (admin endpoints live under <code>/api/admin</code>).</p>
+</div>
+{% endblock %}

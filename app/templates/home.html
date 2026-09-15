@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero card">
+  <h1>Welcome to your Library</h1>
+  <p class="lede">Borrow, track and schedule &mdash; {{ book_count }} book{{ '' if book_count == 1 else 's' }} currently in the catalog.</p>
+  {% if not current_user %}
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/register">Create an account</a>
+      <a class="btn btn-outline" href="/login">Log in</a>
+    </div>
+  {% else %}
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/account">Go to my dashboard</a>
+    </div>
+  {% endif %}
+</section>
+
+<section class="grid-3">
+  <div class="card">
+    <h2>&#128214; Catalog</h2>
+    <p>Search, filter and browse available books.</p>
+    <p class="muted small">Full catalog UI arrives in Phase 4 &mdash; meanwhile explore the <a href="/api/books">books API</a>.</p>
+  </div>
+  <div class="card">
+    <h2>&#128257; Borrowing</h2>
+    <p>Due dates, returns and full borrowing history.</p>
+    <p class="muted small">Arrives in Phases 5&ndash;6.</p>
+  </div>
+  <div class="card">
+    <h2>&#128197; Calendar</h2>
+    <p>Reminders and scheduled library activities.</p>
+    <p class="muted small">Arrives in Phase 7.</p>
+  </div>
+</section>
+{% endblock %}

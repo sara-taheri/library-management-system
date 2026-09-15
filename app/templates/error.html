@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ error_code }} &middot; Library Management System{% endblock %}
+{% block content %}
+<div class="card center error-card">
+  <p class="error-code">{{ error_code }}</p>
+  <h1>{{ error_title }}</h1>
+  <p class="muted">{{ detail }}</p>
+  <a class="btn btn-primary" href="/">Back to home</a>
+</div>
+{% endblock %}

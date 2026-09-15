@@ -55,10 +55,10 @@ python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\act
 pip install -r requirements-dev.txt
 ```
 
-### Web API (Phase 2 - in development)
+### Web application
 
 The project is being upgraded into a full web application (FastAPI + SQLAlchemy/SQLite,
-server-rendered UI in later phases). First, migrate the legacy JSON data into the database:
+server-rendered UI). First, migrate the legacy JSON data into the database:
 
 ```bash
 python scripts/migrate_json_to_db.py     # reads books.json / users.json / borrows.json
@@ -71,9 +71,36 @@ Then start the server:
 uvicorn app.main:app --reload
 ```
 
+- Home page: http://127.0.0.1:8000/
+- Log in / register: http://127.0.0.1:8000/login · http://127.0.0.1:8000/register
 - Interactive API docs (Swagger UI): http://127.0.0.1:8000/docs
 - Health check: http://127.0.0.1:8000/health
 - Books API: http://127.0.0.1:8000/api/books (supports `q`, `genre`, `available_only`, `page`, `page_size`)
+
+#### Authentication (Phase 3)
+
+| Endpoint | Method | Access | Purpose |
+|---|---|---|---|
+| `/api/auth/register` | POST | public | Create an account (always role `member`) |
+| `/api/auth/login` | POST | public | Start a signed session cookie |
+| `/api/auth/logout` | POST | any | End the session |
+| `/api/auth/me` | GET | member+ | Current user profile |
+| `/api/admin/overview` | GET | **admin** | Library statistics (RBAC-protected) |
+
+Server-rendered pages: `/` (home), `/login`, `/register`, `/account` (dashboard),
+`/admin` (admin overview). Forms carry CSRF tokens and use the
+Post/Redirect/Get pattern with flash messages.
+
+Security notes:
+
+- Passwords are hashed with **bcrypt**. Accounts migrated from the legacy
+  `users.json` (unsalted SHA-256) are **transparently upgraded to bcrypt on
+  their first successful login** - no user is locked out.
+- Demo accounts from the legacy data: `admin / admin123` (role admin) and
+  `member / member123` (role member). Change or remove them for real deployments.
+- Sessions are signed cookies (`itsdangerous`): HttpOnly, SameSite=Lax, and
+  Secure in production. Set a strong `SECRET_KEY` in `.env` - the app refuses
+  to boot in production with the default one.
 
 ### Legacy command-line app
 
@@ -94,16 +121,21 @@ python -m pytest
 ```text
 library-management-system/
 ├── app/                    # FastAPI web application
-│   ├── main.py             #   application factory (create_app)
+│   ├── main.py             #   application factory (create_app), middleware, error pages
 │   ├── config.py           #   environment-based settings (.env support)
 │   ├── database.py         #   SQLAlchemy engine/session helpers
-│   ├── deps.py             #   shared FastAPI dependencies (get_db)
+│   ├── deps.py             #   FastAPI dependencies (get_db, auth guards: require_user/require_admin)
+│   ├── web.py              #   Jinja2 templates + shared render helper
 │   ├── models/             #   ORM models: User, Book, Loan, CalendarEvent
-│   ├── schemas/            #   Pydantic request/response schemas
-│   └── routers/            #   HTTP routers (books API for now)
+│   ├── schemas/            #   Pydantic request/response schemas (book, auth, admin)
+│   ├── services/           #   framework-free business logic (auth_service, stats_service)
+│   ├── routers/            #   HTTP routers: books, auth, admin (JSON) + pages (HTML)
+│   ├── templates/          #   Jinja2 pages: base layout, home, login, register, account, admin, error
+│   ├── static/             #   app.css (design-system seed)
+│   └── utils/              #   security (bcrypt + legacy upgrade), sessions, csrf, flash, urls
 ├── scripts/
 │   └── migrate_json_to_db.py   # one-time legacy JSON -> SQLite migration
-├── tests/                  # pytest suite (API, migration, legacy domain)
+├── tests/                  # pytest suite (API, pages, services, security, migration, legacy domain)
 ├── cli.py                  # legacy command-line application (was main.py)
 ├── auth.py                 # legacy CLI authentication (kept working)
 ├── library.py              # legacy CLI library operations (kept working)

@@ -1,4 +1,8 @@
-"""Tests for the meta endpoints (health / root)."""
+"""Tests for the meta endpoints (health) and the HTML home page.
+
+Phase 3 note: GET / moved from a JSON endpoint index to the server-rendered
+home page; the interactive docs at /docs remain the API index.
+"""
 
 
 def test_health(client):
@@ -9,9 +13,8 @@ def test_health(client):
     assert "version" in body
 
 
-def test_root_advertises_endpoints(client):
+def test_home_page_renders(client):
     response = client.get("/")
     assert response.status_code == 200
-    endpoints = response.json()["endpoints"]
-    assert endpoints["books"] == "/api/books"
-    assert endpoints["health"] == "/health"
+    assert "text/html" in response.headers["content-type"]
+    assert "Library" in response.text
