@@ -24,6 +24,8 @@ from app.models import User
 from app.routers import admin as admin_router
 from app.routers import auth as auth_router
 from app.routers import books as books_router
+from app.routers import events as events_router
+from app.routers import loans as loans_router
 from app.routers import pages as pages_router
 from app.utils.sessions import session_user_id
 from app.web import STATIC_DIR, render
@@ -48,9 +50,10 @@ async def lifespan(app: FastAPI):
         __version__,
         settings.environment,
     )
-    # Phase 7+: the calendar runner (background worker processing due-date
-    # events and reminders) will be started here and cancelled on shutdown.
-    # It can open its own sessions via app.state.session_factory.
+    # The calendar runner is deliberately NOT a background worker: it is a
+    # one-shot service (app.services.runner_service) driven by
+    # `python scripts/run_calendar_tasks.py` (manually or from cron).
+    # That keeps the app a single simple process with no scheduler state.
     yield
     logger.info("%s shutting down", settings.app_name)
 
@@ -67,10 +70,11 @@ def create_app(database_url: str | None = None) -> FastAPI:
         version=__version__,
         lifespan=lifespan,
         description=(
-            "Phase 3 - authentication foundation: registration, login/logout "
-            "with signed session cookies, bcrypt hashing (legacy SHA-256 "
-            "accounts upgrade on login), RBAC guards, and server-rendered "
-            "pages with CSRF protection and flash messages."
+            "Library Management System - FastAPI + server-rendered pages. "
+            "Authentication (bcrypt, transparent legacy SHA-256 upgrade, "
+            "RBAC), book catalog management with safe delete, and "
+            "borrowing/returning with due-date scheduling. JSON API under "
+            "/api, HTML pages under /."
         ),
     )
 
@@ -104,6 +108,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     app.include_router(books_router.router)
+    app.include_router(loans_router.router)
+    app.include_router(events_router.router)
     app.include_router(auth_router.router)
     app.include_router(admin_router.router)
     app.include_router(pages_router.router)

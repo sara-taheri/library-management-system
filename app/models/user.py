@@ -32,7 +32,9 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     loans: Mapped[list["Loan"]] = relationship(back_populates="user")
-    events: Mapped[list["CalendarEvent"]] = relationship(back_populates="user")
+    created_events: Mapped[list["CalendarEvent"]] = relationship(
+        back_populates="creator"
+    )
 
     @property
     def is_admin(self) -> bool:

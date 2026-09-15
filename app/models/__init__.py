@@ -5,8 +5,24 @@ adds the entities the web application needs: Loan (with due dates and
 history) and CalendarEvent (scheduling feature, wired up in Phase 7).
 """
 from app.models.book import Book
-from app.models.event import CalendarEvent, EventType
+from app.models.event import (
+    PUBLIC_TYPES,
+    TASK_TYPES,
+    CalendarEvent,
+    EventStatus,
+    EventType,
+)
 from app.models.loan import Loan, LoanStatus
 from app.models.user import User
 
-__all__ = ["Book", "CalendarEvent", "EventType", "Loan", "LoanStatus", "User"]
+__all__ = [
+    "Book",
+    "CalendarEvent",
+    "EventStatus",
+    "EventType",
+    "Loan",
+    "LoanStatus",
+    "PUBLIC_TYPES",
+    "TASK_TYPES",
+    "User",
+]

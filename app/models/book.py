@@ -7,7 +7,7 @@ which is what proper availability tracking requires.
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import Boolean, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base, utcnow
@@ -28,6 +28,10 @@ class Book(Base):
 
     total_copies: Mapped[int] = mapped_column(default=1)
     available_copies: Mapped[int] = mapped_column(default=1)
+
+    # Soft-delete flag: deactivated books disappear from the catalog but
+    # keep their loan history intact ("delete or safely deactivate").
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 

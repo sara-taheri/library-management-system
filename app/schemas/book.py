@@ -1,7 +1,7 @@
 """Book schemas.
 
-Phase 2 exposes read-only output schemas; create/update schemas arrive
-with the admin CRUD endpoints in Phase 4.
+Read schemas existed since Phase 2; Checkpoint 1 adds the admin
+create/update/delete contracts.
 """
 from datetime import datetime
 
@@ -19,6 +19,7 @@ class BookOut(BaseModel):
     description: str | None = None
     total_copies: int
     available_copies: int
+    is_active: bool = True
     created_at: datetime
 
     @computed_field
@@ -33,3 +34,30 @@ class BookListResponse(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class BookCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    author: str = Field(min_length=1, max_length=255)
+    isbn: str | None = Field(None, max_length=20)
+    genre: str | None = Field(None, max_length=100)
+    description: str | None = None
+    total_copies: int = Field(1, ge=1, le=100000)
+
+
+class BookUpdate(BaseModel):
+    """Partial update: only the fields present in the request are applied."""
+
+    title: str | None = Field(None, min_length=1, max_length=255)
+    author: str | None = Field(None, min_length=1, max_length=255)
+    isbn: str | None = Field(None, max_length=20)
+    genre: str | None = Field(None, max_length=100)
+    description: str | None = None
+    total_copies: int | None = Field(None, ge=0, le=100000)
+    is_active: bool | None = None
+
+
+class BookDeleteResponse(BaseModel):
+    message: str
+    deleted: bool = Field(description="true = permanently deleted, false = deactivated")
+    book: BookOut | None = None

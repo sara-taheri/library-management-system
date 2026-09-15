@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if book else 'Add' }} book &middot; Library Management System{% endblock %}
+{% block content %}
+<p class="muted"><a href="{{ ('/books/' ~ book.id) if book else '/books' }}">&larr; Back</a></p>
+
+<div class="auth-card card">
+  <h1>{{ 'Edit book' if book else 'Add a book' }}</h1>
+
+  {% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ action }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+
+    <div class="form-group">
+      <label for="title">Title <span class="required">*</span></label>
+      <input id="title" name="title" type="text" value="{{ form.get('title', '') }}" maxlength="255" required autofocus>
+    </div>
+
+    <div class="form-group">
+      <label for="author">Author <span class="required">*</span></label>
+      <input id="author" name="author" type="text" value="{{ form.get('author', '') }}" maxlength="255" required>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label for="isbn">ISBN <span class="muted">(optional)</span></label>
+        <input id="isbn" name="isbn" type="text" value="{{ form.get('isbn', '') }}" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label for="genre">Genre <span class="muted">(optional)</span></label>
+        <input id="genre" name="genre" type="text" value="{{ form.get('genre', '') }}" maxlength="100">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description <span class="muted">(optional)</span></label>
+      <textarea id="description" name="description" rows="4">{{ form.get('description', '') }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="total_copies">Total copies <span class="required">*</span></label>
+      <input id="total_copies" name="total_copies" type="number" min="1" value="{{ form.get('total_copies', '1') }}" required>
+      {% if book %}
+        <p class="hint">{{ book.available_copies }} of {{ book.total_copies }} currently available. Raising the total adds copies; lowering it removes free copies first and can never go below the copies on loan.</p>
+      {% endif %}
+    </div>
+
+    {% if book %}
+    <div class="form-group">
+      <label class="check">
+        <input type="checkbox" name="is_active" value="on" {% if form.get('is_active', True) %}checked{% endif %}>
+        Active (visible in the catalog)
+      </label>
+    </div>
+    {% endif %}
+
+    <button class="btn btn-primary btn-block" type="submit">{{ submit_label }}</button>
+  </form>
+</div>
+{% endblock %}

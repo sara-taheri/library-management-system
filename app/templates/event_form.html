@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if event else 'New' }} event &middot; Library Management System{% endblock %}
+{% block content %}
+<p class="muted"><a href="{{ back_target }}">&larr; Back to calendar</a></p>
+
+<div class="auth-card card">
+  <h1>{{ 'Edit event' if event else 'New event' }}</h1>
+
+  {% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ action }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+
+    <div class="form-group">
+      <label for="title">Title <span class="required">*</span></label>
+      <input id="title" name="title" type="text" value="{{ form.get('title', '') }}" maxlength="200" required autofocus>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description <span class="muted">(optional)</span></label>
+      <textarea id="description" name="description" rows="3">{{ form.get('description', '') }}</textarea>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label for="event_date">Date <span class="required">*</span></label>
+        <input id="event_date" name="event_date" type="date" value="{{ form.get('event_date', '') }}" required>
+      </div>
+      <div class="form-group">
+        <label for="event_time">Time</label>
+        <input id="event_time" name="event_time" type="time" value="{{ form.get('event_time', '09:00') }}">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="event_type">Type <span class="required">*</span></label>
+      <select id="event_type" name="event_type">
+        {% for value, label in type_choices %}
+        <option value="{{ value }}" {% if form.get('event_type') == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p class="hint">Reminders, book-return reminders, announcements, maintenance notices and custom tasks are
+         processed by the calendar runner when they fall due.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="book_id">Related book <span class="muted">(optional)</span></label>
+      <select id="book_id" name="book_id">
+        <option value="">No related book</option>
+        {% for b in books %}
+        <option value="{{ b.id }}" {% if form.get('book_id')|int == b.id %}selected{% endif %}>{{ b.title }} &mdash; {{ b.author }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if form.get('loan_id') %}
+      <input type="hidden" name="loan_id" value="{{ form.get('loan_id') }}">
+      <p class="muted small">Linked to loan #{{ form.get('loan_id') }}.</p>
+    {% endif %}
+
+    <button class="btn btn-primary btn-block" type="submit">{{ submit_label }}</button>
+  </form>
+</div>
+{% endblock %}

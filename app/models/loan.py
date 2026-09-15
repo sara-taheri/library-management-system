@@ -50,5 +50,15 @@ class Loan(Base):
         so it can never go stale."""
         return self.status == LoanStatus.ACTIVE.value and utcnow() > self.due_at
 
+    # Convenience accessors used by LoanOut and the page templates so
+    # callers never have to walk relationships manually.
+    @property
+    def book_title(self) -> str:
+        return self.book.title if self.book is not None else "(removed)"
+
+    @property
+    def borrower(self) -> str:
+        return self.user.username if self.user is not None else "(unknown)"
+
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Loan {self.id} user={self.user_id} book={self.book_id} {self.status}>"

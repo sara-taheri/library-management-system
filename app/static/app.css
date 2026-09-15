@@ -161,3 +161,38 @@ code { background: #f1f5f9; padding: 1px 6px; border-radius: 6px; font-size: 0.8
   .hero { padding: 28px 20px; }
   .hero h1 { font-size: 1.5rem; }
 }
+
+/* ---------- catalog (Checkpoint 1) ---------- */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.filter-bar { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+.filter-bar .form-group { margin: 0; min-width: 170px; flex: 1; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.95rem; }
+.table-list { width: 100%; border-collapse: collapse; }
+.table-list th, .table-list td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+.table-list tr:last-child td { border-bottom: none; }
+.table-list th { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.badge-available { background: #dcfce7; color: #166534; }
+.badge-out { background: #fef3c7; color: #92400e; }
+.badge-inactive { background: #e2e8f0; color: #475569; }
+.badge-overdue { background: #fee2e2; color: #991b1b; }
+
+/* ---------- calendar (Checkpoint 3) ---------- */
+.calendar-card { padding: 12px; }
+.calendar-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.calendar-grid th { text-align: center; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 0; }
+.cal-cell { border: 1px solid var(--border); vertical-align: top; height: 74px; padding: 4px 6px; border-radius: 8px; }
+.cal-outside { background: #f8fafc; }
+.cal-outside .cal-daynum { color: var(--muted); }
+.cal-today .cal-daynum { background: var(--primary-soft); color: var(--primary); border-radius: 999px; padding: 1px 7px; }
+.cal-selected { outline: 2px solid var(--primary); outline-offset: -2px; }
+.cal-link { display: flex; flex-direction: column; gap: 3px; height: 100%; text-decoration: none; color: inherit; }
+.cal-daynum { font-weight: 600; font-size: 0.9rem; }
+.cal-dots { font-size: 0.72rem; color: var(--primary); font-weight: 600; }
+.event-card { margin-bottom: 12px; }
+.badge-pending { background: var(--primary-soft); color: var(--primary); }
+.badge-type-general { background: #e0e7ff; color: #3730a3; }
+.badge-type-reminder { background: #dbeafe; color: #1e40af; }
+.badge-type-book_return { background: #fef3c7; color: #92400e; }
+.badge-type-announcement { background: #dcfce7; color: #166534; }
+.badge-type-maintenance { background: #fae8ff; color: #86198f; }
+.badge-type-custom_task { background: #e2e8f0; color: #334155; }

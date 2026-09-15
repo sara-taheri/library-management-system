@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} &middot; Library Management System{% endblock %}
+{% block content %}
+<p class="muted"><a href="/books">&larr; Back to catalog</a></p>
+
+<div class="card">
+  <div class="page-head">
+    <h1 class="page-title">{{ book.title }}</h1>
+    <div>
+      {% if not book.is_active %}<span class="badge badge-inactive">Deactivated</span>
+      {% elif book.available_copies > 0 %}<span class="badge badge-available">Available</span>
+      {% else %}<span class="badge badge-out">All copies on loan</span>{% endif %}
+    </div>
+  </div>
+  <p class="lede">by {{ book.author }}</p>
+
+  <table class="kv">
+    <tr><th>Genre</th><td>{{ book.genre or '&mdash;' }}</td></tr>
+    <tr><th>ISBN</th><td>{{ book.isbn or '&mdash;' }}</td></tr>
+    <tr><th>Copies</th><td>{{ book.available_copies }} available of {{ book.total_copies }}</td></tr>
+    <tr><th>Added</th><td>{{ book.created_at.strftime('%Y-%m-%d') }}</td></tr>
+  </table>
+
+  {% if book.description %}<p>{{ book.description }}</p>{% endif %}
+
+  {% if current_user and current_user.is_admin %}
+  <div class="btn-row">
+    <a class="btn btn-outline" href="/books/{{ book.id }}/edit">Edit</a>
+    {% if book.is_active %}
+    <form method="post" action="/books/{{ book.id }}/delete"
+          onsubmit="return confirm('Deactivate this book? It will be hidden from the catalog; borrowing history is kept.');">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <button class="btn btn-ghost" type="submit">Deactivate</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if current_user %}
+    {% if active_loan %}
+    <div class="alert alert-info" role="status">
+      You borrowed this book on {{ active_loan.borrowed_at.strftime('%Y-%m-%d') }} &mdash;
+      due <strong>{{ active_loan.due_at.strftime('%Y-%m-%d') }}</strong>
+      {% if active_loan.is_overdue %}<span class="badge badge-overdue">Overdue</span>{% endif %}
+    </div>
+    <form method="post" action="/loans/{{ active_loan.id }}/return" class="btn-row">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="next" value="/books/{{ book.id }}">
+      <button class="btn btn-primary" type="submit">Return book</button>
+    </form>
+    {% elif book.is_active and book.available_copies > 0 %}
+    <form method="post" action="/books/{{ book.id }}/borrow" class="btn-row">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <button class="btn btn-primary" type="submit">Borrow this book</button>
+      <span class="muted small">Loan period: {{ loan_period_days }} days.</span>
+    </form>
+    {% elif book.is_active %}
+    <p class="muted">All copies are currently on loan. Check back soon.</p>
+    {% endif %}
+  {% else %}
+  <p class="muted small"><a href="/login?next=/books/{{ book.id }}">Log in</a> to borrow this book.</p>
+  {% endif %}
+</div>
+{% endblock %}
