@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Calendar &middot; Library Management System{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="page-title">{{ month_name }} {{ year }}</h1>
+  <div class="btn-row">
+    <a class="btn btn-ghost btn-sm" href="/calendar?month={{ prev_month }}">&larr; Prev</a>
+    <a class="btn btn-ghost btn-sm" href="/calendar">Today</a>
+    <a class="btn btn-ghost btn-sm" href="/calendar?month={{ next_month }}">Next &rarr;</a>
+    {% if current_user %}
+      <a class="btn btn-primary btn-sm" href="/calendar/new?date={{ selected.isoformat() }}">+ Add event</a>
+    {% else %}
+      <a class="btn btn-primary btn-sm" href="/login?next=/calendar/new">+ Add event</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card calendar-card">
+  <table class="calendar-grid">
+    <thead>
+      <tr>{% for name in weekday_names %}<th>{{ name }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for week in weeks %}
+      <tr>
+        {% for d in week %}
+        <td class="cal-cell{% if d.month != month_number %} cal-outside{% endif %}{% if d == selected %} cal-selected{% endif %}{% if d == today %} cal-today{% endif %}">
+          <a class="cal-link" href="/calendar?month={{ '%04d-%02d'|format(d.year, d.month) }}&amp;date={{ d.isoformat() }}">
+            <span class="cal-daynum">{{ d.day }}</span>
+            {% set day_count = events_by_day.get(d, [])|length %}
+            {% if day_count %}<span class="cal-dots">{{ day_count }} event{{ '' if day_count == 1 else 's' }}</span>{% endif %}
+          </a>
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="page-head">
+  <h2>Events on {{ selected.strftime('%A, %d %B %Y') }}</h2>
+</div>
+
+{% if day_events %}
+  {% for e in day_events %}
+  <div class="card event-card">
+    <div class="page-head">
+      <strong>{{ e.title }}</strong>
+      <span>
+        <span class="badge badge-type-{{ e.event_type }}">{{ type_labels.get(e.event_type, e.event_type) }}</span>
+        {% if e.status == 'completed' %}<span class="badge badge-available">Completed</span>
+        {% elif e.status == 'cancelled' %}<span class="badge badge-inactive">Cancelled</span>
+        {% else %}<span class="badge badge-pending">Pending</span>{% endif %}
+      </span>
+    </div>
+    <p class="muted small">
+      {{ e.event_date.strftime('%H:%M') }} &middot; by {{ e.creator_name }}
+      {% if e.executed_at %} &middot; executed {{ e.executed_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}
+    </p>
+    {% if e.description %}<p>{{ e.description }}</p>{% endif %}
+    {% if e.book_id %}
+      <p class="muted small">Related book:
+        {% if e.book %}<a href="/books/{{ e.book_id }}">{{ e.book.title }}</a>{% else %}#{{ e.book_id }}{% endif %}
+      </p>
+    {% endif %}
+    {% if e.loan_id %}<p class="muted small">Linked loan #{{ e.loan_id }}</p>{% endif %}
+    {% if e.result_message %}<p class="muted small">Runner result: {{ e.result_message }}</p>{% endif %}
+
+    {% if current_user and (current_user.is_admin or e.created_by == current_user.id) %}
+    <div class="btn-row">
+      <a class="btn btn-outline btn-sm" href="/calendar/{{ e.id }}/edit">Edit</a>
+      {% if e.status == 'pending' %}
+      <form method="post" action="/calendar/{{ e.id }}/cancel">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <button class="btn btn-ghost btn-sm" type="submit">Cancel</button>
+      </form>
+      {% endif %}
+      <form method="post" action="/calendar/{{ e.id }}/delete"
+            onsubmit="return confirm('Delete this event permanently?');">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <button class="btn btn-ghost btn-sm" type="submit">Delete</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+<div class="card empty-state">
+  <div class="empty-icon" aria-hidden="true">&#128197;</div>
+  <p>No events on this day.</p>
+  {% if current_user %}
+    <p><a class="btn btn-primary btn-sm" href="/calendar/new?date={{ selected.isoformat() }}">Add an event</a></p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

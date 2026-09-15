@@ -13,8 +13,12 @@
 
 <div class="card">
   <h2>Tools</h2>
-  <p class="muted">Member management, book CRUD screens and moderation tools arrive in Phases 4&ndash;6.
-     Programmatic access is already available via the <a href="/docs">API docs</a>
-     (admin endpoints live under <code>/api/admin</code>).</p>
+  <div class="btn-row">
+    <a class="btn btn-outline" href="/books?all=1">Manage books</a>
+    <a class="btn btn-outline" href="/books/new">Add a book</a>
+    <a class="btn btn-outline" href="/admin/loans">All loans</a>
+  </div>
+  <p class="muted small">Programmatic access is available via the <a href="/docs">API docs</a>
+     (<code>/api/books</code>, <code>/api/loans</code>, <code>/api/admin</code>).</p>
 </div>
 {% endblock %}

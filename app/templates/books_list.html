@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Book catalog &middot; Library Management System{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1 class="page-title">Book catalog</h1>
+  {% if current_user and current_user.is_admin %}
+    <a class="btn btn-primary" href="/books/new">+ Add book</a>
+  {% endif %}
+</div>
+
+<form class="card filter-bar" method="get" action="/books">
+  <div class="form-group">
+    <label for="q">Search</label>
+    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Title or author&hellip;">
+  </div>
+  <div class="form-group">
+    <label for="genre">Genre</label>
+    <input id="genre" name="genre" type="text" value="{{ genre }}" placeholder="e.g. Fantasy">
+  </div>
+  <label class="check">
+    <input type="checkbox" name="available" value="1" {% if available == "1" %}checked{% endif %}>
+    Available only
+  </label>
+  {% if current_user and current_user.is_admin %}
+    <label class="check">
+      <input type="checkbox" name="all" value="1" {% if include_inactive %}checked{% endif %}>
+      Include deactivated
+    </label>
+  {% endif %}
+  <div class="btn-row">
+    <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+    <a class="btn btn-ghost btn-sm" href="/books">Reset</a>
+  </div>
+</form>
+
+<p class="muted">{{ total }} book{{ '' if total == 1 else 's' }} found</p>
+
+{% if books %}
+<div class="card">
+  <table class="table-list">
+    <thead>
+      <tr><th>Title</th><th>Author</th><th>Genre</th><th>Copies</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for book in books %}
+      <tr>
+        <td><a href="/books/{{ book.id }}">{{ book.title }}</a></td>
+        <td>{{ book.author }}</td>
+        <td>{{ book.genre or '&mdash;' }}</td>
+        <td>{{ book.available_copies }} / {{ book.total_copies }}</td>
+        <td>
+          {% if not book.is_active %}<span class="badge badge-inactive">Deactivated</span>
+          {% elif book.available_copies > 0 %}<span class="badge badge-available">Available</span>
+          {% else %}<span class="badge badge-out">All on loan</span>{% endif %}
+        </td>
+        <td><a class="btn btn-outline btn-sm" href="/books/{{ book.id }}">Details</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty-state">
+  <div class="empty-icon" aria-hidden="true">&#128269;</div>
+  <p>No books match your filters.</p>
+</div>
+{% endif %}
+{% endblock %}

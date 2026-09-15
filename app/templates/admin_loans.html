@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}All loans &middot; Library Management System{% endblock %}
+{% block content %}
+<p class="muted"><a href="/admin">&larr; Back to admin</a></p>
+
+<div class="page-head">
+  <h1 class="page-title">All loans</h1>
+  <div class="btn-row">
+    <a class="btn btn-sm {{ 'btn-primary' if status_filter == '' else 'btn-ghost' }}" href="/admin/loans">All</a>
+    <a class="btn btn-sm {{ 'btn-primary' if status_filter == 'active' else 'btn-ghost' }}" href="/admin/loans?status=active">Active</a>
+    <a class="btn btn-sm {{ 'btn-primary' if status_filter == 'returned' else 'btn-ghost' }}" href="/admin/loans?status=returned">Returned</a>
+  </div>
+</div>
+
+<p class="muted">{{ total }} loan{{ '' if total == 1 else 's' }}</p>
+
+{% if loans %}
+<div class="card">
+  <table class="table-list">
+    <thead>
+      <tr><th>Member</th><th>Book</th><th>Borrowed</th><th>Due</th><th>Returned</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for loan in loans %}
+      <tr>
+        <td>{{ loan.borrower }}</td>
+        <td><a href="/books/{{ loan.book_id }}">{{ loan.book_title }}</a></td>
+        <td>{{ loan.borrowed_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ loan.due_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ loan.returned_at.strftime('%Y-%m-%d') if loan.returned_at else '&mdash;' }}</td>
+        <td>
+          {% if loan.status == 'returned' %}<span class="badge badge-inactive">Returned</span>
+          {% elif loan.is_overdue %}<span class="badge badge-overdue">Active &middot; overdue</span>
+          {% else %}<span class="badge badge-available">Active</span>{% endif %}
+        </td>
+        <td>
+          {% if loan.status == 'active' %}
+          <form method="post" action="/loans/{{ loan.id }}/return">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <input type="hidden" name="next" value="/admin/loans">
+            <button class="btn btn-outline btn-sm" type="submit">Return</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty-state">
+  <div class="empty-icon" aria-hidden="true">&#128237;</div>
+  <p>No loans recorded yet.</p>
+</div>
+{% endif %}
+{% endblock %}

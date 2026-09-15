@@ -22,14 +22,92 @@
 </div>
 
 <h2>Currently borrowed</h2>
+{% if loans_active %}
+<div class="card">
+  <table class="table-list">
+    <thead>
+      <tr><th>Book</th><th>Borrowed</th><th>Due</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for loan in loans_active %}
+      <tr>
+        <td><a href="/books/{{ loan.book_id }}">{{ loan.book_title }}</a></td>
+        <td>{{ loan.borrowed_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ loan.due_at.strftime('%Y-%m-%d') }}</td>
+        <td>
+          {% if loan.is_overdue %}<span class="badge badge-overdue">Overdue</span>
+          {% else %}<span class="badge badge-available">On time</span>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="/loans/{{ loan.id }}/return">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <input type="hidden" name="next" value="/account">
+            <button class="btn btn-outline btn-sm" type="submit">Return</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
 <div class="card empty-state">
   <p class="empty-icon" aria-hidden="true">&#128237;</p>
-  <p>No loans yet &mdash; the borrowing feature arrives in Phase 5.</p>
+  <p>Nothing borrowed right now &mdash; <a href="/books">browse the catalog</a>.</p>
 </div>
+{% endif %}
+
+<h2>Borrowing history</h2>
+{% if loans_history %}
+<div class="card">
+  <table class="table-list">
+    <thead>
+      <tr><th>Book</th><th>Borrowed</th><th>Due</th><th>Returned</th></tr>
+    </thead>
+    <tbody>
+      {% for loan in loans_history %}
+      <tr>
+        <td><a href="/books/{{ loan.book_id }}">{{ loan.book_title }}</a></td>
+        <td>{{ loan.borrowed_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ loan.due_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ loan.returned_at.strftime('%Y-%m-%d') if loan.returned_at else '&mdash;' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="muted small">Returned books will appear here.</p>
+{% endif %}
 
 <h2>Upcoming schedule</h2>
+{% if upcoming_events %}
+<div class="card">
+  <table class="table-list">
+    <thead>
+      <tr><th>When</th><th>Event</th><th>Type</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      {% for e in upcoming_events %}
+      <tr>
+        <td>{{ e.event_date.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td><a href="/calendar?date={{ e.event_date.date().isoformat() }}">{{ e.title }}</a></td>
+        <td><span class="badge badge-type-{{ e.event_type }}">{{ e.event_type.replace('_', ' ') }}</span></td>
+        <td>
+          {% if e.status == 'completed' %}<span class="badge badge-available">Completed</span>
+          {% elif e.status == 'cancelled' %}<span class="badge badge-inactive">Cancelled</span>
+          {% else %}<span class="badge badge-pending">Pending</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted small"><a href="/calendar">Open the calendar</a></p>
+</div>
+{% else %}
 <div class="card empty-state">
   <p class="empty-icon" aria-hidden="true">&#128197;</p>
-  <p>Nothing scheduled &mdash; the calendar arrives in Phase 7.</p>
+  <p>Nothing scheduled yet &mdash; <a href="/calendar">open the calendar</a> to add events.</p>
 </div>
+{% endif %}
 {% endblock %}

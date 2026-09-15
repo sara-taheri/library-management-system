@@ -9,11 +9,15 @@ from app.schemas.auth import (
     UserOut,
 )
 from app.schemas.book import BookListResponse, BookOut
+from app.schemas.loan import BorrowRequest, LoanListResponse, LoanOut
 
 __all__ = [
     "AdminOverview",
     "BookListResponse",
     "BookOut",
+    "BorrowRequest",
+    "LoanListResponse",
+    "LoanOut",
     "LoginRequest",
     "LoginResponse",
     "MessageResponse",
