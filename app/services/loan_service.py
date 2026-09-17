@@ -14,10 +14,10 @@ The calendar event uses the EXISTING CalendarEvent table - Checkpoint 3
 modernises that model in place (no second calendar system).
 """
 import logging
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.config import settings
 from app.database import utcnow
@@ -85,6 +85,50 @@ def list_loans(
     )
     pages = max(1, -(-total // page_size))
     return items, total, pages
+
+
+def activity_on_date(
+    db: Session, day: date, *, user_id: int | None = None
+) -> dict:
+    """Loans due / borrowed / returned on a calendar day.
+
+    ``user_id=None`` means every member (admin briefing). Pass a member
+    id to restrict the lists to that member's own loans. Guests should
+    not call this - the page layer skips it.
+    """
+    start = datetime.combine(day, time.min)
+    end = start + timedelta(days=1)
+
+    def _load(stmt):
+        if user_id is not None:
+            stmt = stmt.where(Loan.user_id == user_id)
+        return list(
+            db.scalars(
+                stmt.options(joinedload(Loan.book), joinedload(Loan.user))
+                .order_by(Loan.id)
+            )
+            .unique()
+            .all()
+        )
+
+    due = _load(
+        select(Loan).where(
+            Loan.status == LoanStatus.ACTIVE.value,
+            Loan.due_at >= start,
+            Loan.due_at < end,
+        )
+    )
+    borrowed = _load(
+        select(Loan).where(Loan.borrowed_at >= start, Loan.borrowed_at < end)
+    )
+    returned = _load(
+        select(Loan).where(
+            Loan.returned_at.isnot(None),
+            Loan.returned_at >= start,
+            Loan.returned_at < end,
+        )
+    )
+    return {"due": due, "borrowed": borrowed, "returned": returned}
 
 
 # ------------------------------------------------------------------ writes

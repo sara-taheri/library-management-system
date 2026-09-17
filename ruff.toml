@@ -1,0 +1,6 @@
+# Minimal lint config for the Library Management System.
+# B008 flags FastAPI's `Depends()` default-argument idiom as a false
+# positive, so it is ignored. Stylistic rules (E/W) are out of scope.
+[lint]
+select = ["F", "B"]
+ignore = ["B008"]

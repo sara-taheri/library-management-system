@@ -1,14 +1,16 @@
 {% extends "base.html" %}
+{% from "macros.html" import badge, empty_state %}
 {% block title %}All loans &middot; Library Management System{% endblock %}
 {% block content %}
 <p class="muted"><a href="/admin">&larr; Back to admin</a></p>
 
 <div class="page-head">
   <h1 class="page-title">All loans</h1>
-  <div class="btn-row">
-    <a class="btn btn-sm {{ 'btn-primary' if status_filter == '' else 'btn-ghost' }}" href="/admin/loans">All</a>
-    <a class="btn btn-sm {{ 'btn-primary' if status_filter == 'active' else 'btn-ghost' }}" href="/admin/loans?status=active">Active</a>
-    <a class="btn btn-sm {{ 'btn-primary' if status_filter == 'returned' else 'btn-ghost' }}" href="/admin/loans?status=returned">Returned</a>
+  <div class="btn-row" role="group" aria-label="Filter loans">
+    <a class="btn btn-sm {{ 'btn-primary' if status_filter == '' else 'btn-ghost' }}" href="/admin/loans"{% if status_filter == '' %} aria-current="page"{% endif %}>All</a>
+    <a class="btn btn-sm {{ 'btn-primary' if status_filter == 'active' else 'btn-ghost' }}" href="/admin/loans?status=active"{% if status_filter == 'active' %} aria-current="page"{% endif %}>Active</a>
+    <a class="btn btn-sm {{ 'btn-primary' if status_filter == 'overdue' else 'btn-ghost' }}" href="/admin/loans?status=overdue"{% if status_filter == 'overdue' %} aria-current="page"{% endif %}>Overdue</a>
+    <a class="btn btn-sm {{ 'btn-primary' if status_filter == 'returned' else 'btn-ghost' }}" href="/admin/loans?status=returned"{% if status_filter == 'returned' %} aria-current="page"{% endif %}>Returned</a>
   </div>
 </div>
 
@@ -16,9 +18,18 @@
 
 {% if loans %}
 <div class="card">
+  <div class="table-wrap">
   <table class="table-list">
     <thead>
-      <tr><th>Member</th><th>Book</th><th>Borrowed</th><th>Due</th><th>Returned</th><th>Status</th><th></th></tr>
+      <tr>
+        <th scope="col">Member</th>
+        <th scope="col">Book</th>
+        <th scope="col">Borrowed</th>
+        <th scope="col">Due</th>
+        <th scope="col">Returned</th>
+        <th scope="col">Status</th>
+        <th scope="col"><span class="visually-hidden">Actions</span></th>
+      </tr>
     </thead>
     <tbody>
       {% for loan in loans %}
@@ -29,9 +40,9 @@
         <td>{{ loan.due_at.strftime('%Y-%m-%d') }}</td>
         <td>{{ loan.returned_at.strftime('%Y-%m-%d') if loan.returned_at else '&mdash;' }}</td>
         <td>
-          {% if loan.status == 'returned' %}<span class="badge badge-inactive">Returned</span>
-          {% elif loan.is_overdue %}<span class="badge badge-overdue">Active &middot; overdue</span>
-          {% else %}<span class="badge badge-available">Active</span>{% endif %}
+          {% if loan.status == 'returned' %}{{ badge("inactive", "Returned") }}
+          {% elif loan.is_overdue %}{{ badge("overdue", "Active · overdue") }}
+          {% else %}{{ badge("available", "Active") }}{% endif %}
         </td>
         <td>
           {% if loan.status == 'active' %}
@@ -46,11 +57,12 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% else %}
-<div class="card empty-state">
+{% call empty_state() %}
   <div class="empty-icon" aria-hidden="true">&#128237;</div>
   <p>No loans recorded yet.</p>
-</div>
+{% endcall %}
 {% endif %}
 {% endblock %}

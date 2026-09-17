@@ -1,22 +1,89 @@
 {% extends "base.html" %}
+{% from "macros.html" import badge, empty_state %}
 {% block title %}Admin &middot; Library Management System{% endblock %}
 {% block content %}
-<h1 class="page-title">Admin overview</h1>
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Admin overview</h1>
+    <p class="page-lead">Live totals from the catalog, loans and calendar. Tiles with links open the matching list.</p>
+  </div>
+</header>
 
-<div class="stats-grid">
-  <div class="card stat"><span class="stat-value">{{ stats.users }}</span><span class="stat-label">Members</span></div>
-  <div class="card stat"><span class="stat-value">{{ stats.books }}</span><span class="stat-label">Book titles</span></div>
-  <div class="card stat"><span class="stat-value">{{ stats.loans_active }}</span><span class="stat-label">Active loans</span></div>
-  <div class="card stat"><span class="stat-value">{{ stats.loans_total }}</span><span class="stat-label">Loans total</span></div>
-  <div class="card stat"><span class="stat-value">{{ stats.events }}</span><span class="stat-label">Calendar events</span></div>
+<div class="stats-grid" aria-label="Library metrics">
+  <div class="card stat">
+    <span class="stat-value">{{ stats.users }}</span>
+    <span class="stat-label">Members</span>
+  </div>
+  <a class="card stat stat-link" href="/books?all=1">
+    <span class="stat-value">{{ stats.books }}</span>
+    <span class="stat-label">Book titles</span>
+  </a>
+  <a class="card stat stat-link" href="/books?available=1">
+    <span class="stat-value">{{ stats.available_books }}</span>
+    <span class="stat-label">Available books</span>
+  </a>
+  <div class="card stat">
+    <span class="stat-value">{{ stats.available_copies }}</span>
+    <span class="stat-label">Available copies</span>
+  </div>
+  <div class="card stat">
+    <span class="stat-value">{{ stats.borrowed_books }}</span>
+    <span class="stat-label">Borrowed books</span>
+  </div>
+  <a class="card stat stat-link" href="/admin/loans?status=active">
+    <span class="stat-value">{{ stats.loans_active }}</span>
+    <span class="stat-label">Active loans</span>
+  </a>
+  <a class="card stat stat-link" href="/admin/loans?status=overdue">
+    <span class="stat-value{% if stats.loans_overdue %} stat-value-danger{% endif %}">{{ stats.loans_overdue }}</span>
+    <span class="stat-label">Overdue loans</span>
+  </a>
+  <div class="card stat">
+    <span class="stat-value{% if stats.loans_due_soon %} stat-value-warning{% endif %}">{{ stats.loans_due_soon }}</span>
+    <span class="stat-label">Due soon</span>
+  </div>
+  <a class="card stat stat-link" href="/calendar">
+    <span class="stat-value">{{ stats.events }}</span>
+    <span class="stat-label">Calendar events</span>
+  </a>
+  <a class="card stat stat-link" href="/calendar">
+    <span class="stat-value">{{ stats.events_upcoming }}</span>
+    <span class="stat-label">Upcoming events</span>
+  </a>
 </div>
+
+<section class="section" aria-labelledby="activity-heading">
+  <h2 id="activity-heading">Recent activity</h2>
+  {% if stats.recent_activity %}
+  <div class="card">
+    <ul class="activity-list">
+      {% for item in stats.recent_activity %}
+      <li class="activity-item">
+        {% if item.action == "returned" %}{{ badge("available", "Returned") }}
+        {% elif item.action == "borrowed" %}{{ badge("pending", "Borrowed") }}
+        {% else %}{{ badge("type-general", "Scheduled") }}{% endif %}
+        <span class="activity-title">{{ item.title }}</span>
+        {% if item.actor %}<span class="muted">{{ item.actor }}</span>{% endif %}
+        <time class="muted small" datetime="{{ item.at }}">{{ item.at.replace("T", " ") }}</time>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  {% call empty_state() %}
+    <p class="empty-icon" aria-hidden="true">&#128203;</p>
+    <p>No recent borrowing or calendar activity yet.</p>
+  {% endcall %}
+  {% endif %}
+</section>
 
 <div class="card">
   <h2>Tools</h2>
   <div class="btn-row">
     <a class="btn btn-outline" href="/books?all=1">Manage books</a>
-    <a class="btn btn-outline" href="/books/new">Add a book</a>
+    <a class="btn btn-primary" href="/books/new">Add a book</a>
     <a class="btn btn-outline" href="/admin/loans">All loans</a>
+    <a class="btn btn-outline" href="/calendar">Calendar</a>
   </div>
   <p class="muted small">Programmatic access is available via the <a href="/docs">API docs</a>
      (<code>/api/books</code>, <code>/api/loans</code>, <code>/api/admin</code>).</p>

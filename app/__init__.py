@@ -1,8 +1,7 @@
-"""Library Management System - web application package.
+"""Library Management System - FastAPI web application package.
 
-Phase 2 scope: configuration, database layer, ORM models and a read-only
-books API. Authentication, UI pages and the remaining CRUD endpoints are
-added in later phases (see docs/roadmap in the repository README).
+JSON API under `/api` and server-rendered Jinja2 pages under `/`.
+The original command-line app (`cli.py`) is still available and unchanged.
 """
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"

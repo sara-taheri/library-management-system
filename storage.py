@@ -1,5 +1,4 @@
 import json
-import json
 
 def load_data(filename):
     
