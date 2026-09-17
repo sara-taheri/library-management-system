@@ -7,40 +7,47 @@
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
   <header class="navbar">
     <div class="container navbar-inner">
       <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">&#128218;</span> Library<span class="brand-accent">MS</span></a>
       <nav class="nav-links" aria-label="Main navigation">
-        <a href="/">Home</a>
-        <a href="/books">Catalog</a>
-        <a href="/calendar">Calendar</a>
-        <a href="/api/books">Catalog&nbsp;API</a>
+        <a href="/" {% if nav_active(request, "/") %}aria-current="page"{% endif %}>Home</a>
+        <a href="/books" {% if nav_active(request, "/books") %}aria-current="page"{% endif %}>Catalog</a>
+        <a href="/calendar" {% if nav_active(request, "/calendar") %}aria-current="page"{% endif %}>Calendar</a>
         {% if current_user %}
-          <a href="/account">Dashboard</a>
-          {% if current_user.is_admin %}<a href="/admin">Admin</a>{% endif %}
+          <a href="/account" {% if nav_active(request, "/account") %}aria-current="page"{% endif %}>Dashboard</a>
+          {% if current_user.is_admin %}
+            <a href="/admin" {% if nav_active(request, "/admin") %}aria-current="page"{% endif %}>Admin</a>
+          {% endif %}
           <form method="post" action="/logout" class="nav-form">
             <input type="hidden" name="_csrf" value="{{ csrf_token }}">
             <button type="submit" class="btn btn-ghost btn-sm">Log out <span class="muted">({{ current_user.username }})</span></button>
           </form>
         {% else %}
-          <a href="/login">Log in</a>
-          <a href="/register" class="btn btn-primary btn-sm">Sign up</a>
+          <a href="/login" {% if nav_active(request, "/login") %}aria-current="page"{% endif %}>Log in</a>
+          <a href="/register" class="btn btn-primary btn-sm"{% if nav_active(request, "/register") %} aria-current="page"{% endif %}>Sign up</a>
         {% endif %}
       </nav>
     </div>
   </header>
 
-  <main class="container page">
+  <main id="main-content" class="container page" tabindex="-1">
     {% for f in flashes %}
-      <div class="alert alert-{{ f.category }}" role="alert">{{ f.message }}</div>
+      <div class="alert alert-{{ f.category }}" role="{{ 'alert' if f.category == 'error' else 'status' }}">{{ f.message }}</div>
     {% endfor %}
     {% block content %}{% endblock %}
   </main>
 
   <footer class="footer">
-    <div class="container muted">
-      Library Management System &middot; FastAPI + SQLite &middot;
-      <a href="/docs">API docs</a> &middot; <a href="/health">status</a>
+    <div class="container footer-inner">
+      <p class="muted">Library Management System &middot; FastAPI + SQLite</p>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/api/books">Catalog API</a>
+        <a href="/docs">API docs</a>
+        <a href="/health">Status</a>
+      </nav>
     </div>
   </footer>
 </body>

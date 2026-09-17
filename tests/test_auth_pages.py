@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.models import User
 from app.utils.security import BCRYPT
-from tests.conftest import api_login, csrf_token_from, make_user, page_login
+from tests.conftest import api_login, csrf_token_from, page_login
 
 
 # ------------------------------------------------------------------- home

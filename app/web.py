@@ -18,6 +18,21 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
+def nav_active(request: Request, href: str) -> bool:
+    """True when the current path is `href` or a nested page under it.
+
+    Home (`/`) is exact-match only so it does not light up on every URL.
+    """
+    path = request.url.path
+    if href == "/":
+        return path == "/"
+    href = href.rstrip("/") or "/"
+    return path == href or path.startswith(href + "/")
+
+
+templates.env.globals["nav_active"] = nav_active
+
+
 def render(
     request: Request,
     template_name: str,

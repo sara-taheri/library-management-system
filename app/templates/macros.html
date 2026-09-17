@@ -1,0 +1,28 @@
+{# Small, reusable presentation helpers. No business logic lives here. #}
+
+{% macro badge(kind, label) -%}
+<span class="badge badge-{{ kind }}">{{ label }}</span>
+{%- endmacro %}
+
+{% macro type_badge(event_type, label=None) -%}
+<span class="badge badge-type-{{ event_type }}">{{ label or event_type.replace('_', ' ') }}</span>
+{%- endmacro %}
+
+{% macro event_status(status) -%}
+  {% if status == 'completed' %}{{ badge("available", "Completed") }}
+  {% elif status == 'cancelled' %}{{ badge("inactive", "Cancelled") }}
+  {% else %}{{ badge("pending", "Pending") }}{% endif %}
+{%- endmacro %}
+
+{% macro book_status(book, detail=False) -%}
+  {% if not book.is_active %}{{ badge("inactive", "Deactivated") }}
+  {% elif book.available_copies > 0 %}{{ badge("available", "Available") }}
+  {% elif detail %}{{ badge("out", "All copies on loan") }}
+  {% else %}{{ badge("out", "All on loan") }}{% endif %}
+{%- endmacro %}
+
+{% macro empty_state() %}
+<div class="card empty-state">
+  {{ caller() }}
+</div>
+{% endmacro %}

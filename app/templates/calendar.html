@@ -1,12 +1,13 @@
 {% extends "base.html" %}
+{% from "macros.html" import type_badge, event_status, empty_state %}
 {% block title %}Calendar &middot; Library Management System{% endblock %}
 {% block content %}
 <div class="page-head">
   <h1 class="page-title">{{ month_name }} {{ year }}</h1>
   <div class="btn-row">
-    <a class="btn btn-ghost btn-sm" href="/calendar?month={{ prev_month }}">&larr; Prev</a>
+    <a class="btn btn-ghost btn-sm" href="/calendar?month={{ prev_month }}" aria-label="Previous month">&larr; Prev</a>
     <a class="btn btn-ghost btn-sm" href="/calendar">Today</a>
-    <a class="btn btn-ghost btn-sm" href="/calendar?month={{ next_month }}">Next &rarr;</a>
+    <a class="btn btn-ghost btn-sm" href="/calendar?month={{ next_month }}" aria-label="Next month">Next &rarr;</a>
     {% if current_user %}
       <a class="btn btn-primary btn-sm" href="/calendar/new?date={{ selected.isoformat() }}">+ Add event</a>
     {% else %}
@@ -16,9 +17,9 @@
 </div>
 
 <div class="card calendar-card">
-  <table class="calendar-grid">
+  <table class="calendar-grid" aria-label="{{ month_name }} {{ year }}">
     <thead>
-      <tr>{% for name in weekday_names %}<th>{{ name }}</th>{% endfor %}</tr>
+      <tr>{% for name in weekday_names %}<th scope="col">{{ name }}</th>{% endfor %}</tr>
     </thead>
     <tbody>
       {% for week in weeks %}
@@ -42,16 +43,108 @@
   <h2>Events on {{ selected.strftime('%A, %d %B %Y') }}</h2>
 </div>
 
+<section class="card day-briefing" aria-labelledby="briefing-heading">
+  <h2 id="briefing-heading">This day</h2>
+  <p class="muted small">Library summary for the selected date.
+     {% if current_user and current_user.is_admin %}Showing every member's loans.
+     {% elif current_user %}Showing your loans.
+     {% else %}Sign in to see loans due and borrowing activity.{% endif %}
+  </p>
+  <div class="stats-grid" aria-label="Selected day summary">
+    <div class="card stat">
+      <span class="stat-value">{{ briefing.due|length }}</span>
+      <span class="stat-label">Books due</span>
+    </div>
+    <div class="card stat">
+      <span class="stat-value">{{ briefing.borrowed|length }}</span>
+      <span class="stat-label">Borrowed</span>
+    </div>
+    <div class="card stat">
+      <span class="stat-value">{{ briefing.returned|length }}</span>
+      <span class="stat-label">Returned</span>
+    </div>
+    <div class="card stat">
+      <span class="stat-value">{{ pending_task_count }}</span>
+      <span class="stat-label">Pending tasks</span>
+    </div>
+  </div>
+
+  {% if briefing.due %}
+  <h3>Books due</h3>
+  <ul class="activity-list">
+    {% for loan in briefing.due %}
+    <li class="activity-item">
+      <a href="/books/{{ loan.book_id }}">{{ loan.book_title }}</a>
+      {% if current_user and current_user.is_admin %}<span class="muted">{{ loan.borrower }}</span>{% endif %}
+      <span class="muted small">due {{ loan.due_at.strftime('%H:%M') }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if briefing.borrowed or briefing.returned %}
+  <h3>Borrowing activity</h3>
+  <ul class="activity-list">
+    {% for loan in briefing.borrowed %}
+    <li class="activity-item">
+      <span class="badge badge-pending">Borrowed</span>
+      <a href="/books/{{ loan.book_id }}">{{ loan.book_title }}</a>
+      {% if current_user and current_user.is_admin %}<span class="muted">{{ loan.borrower }}</span>{% endif %}
+    </li>
+    {% endfor %}
+    {% for loan in briefing.returned %}
+    <li class="activity-item">
+      <span class="badge badge-available">Returned</span>
+      <a href="/books/{{ loan.book_id }}">{{ loan.book_title }}</a>
+      {% if current_user and current_user.is_admin %}<span class="muted">{{ loan.borrower }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if current_user %}
+  <div class="btn-row">
+    <form method="post" action="/calendar/run">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="date" value="{{ selected.isoformat() }}">
+      <button class="btn btn-primary btn-sm" type="submit">Run pending tasks</button>
+    </form>
+  </div>
+  <p class="hint">Runs pending reminders and tasks scheduled on this date (same engine as the CLI runner).</p>
+
+  <h3>Calculator</h3>
+  <form class="calc-form" method="post" action="/calendar/calculate">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="date" value="{{ selected.isoformat() }}">
+    <div class="form-group">
+      <label for="calc-a">A</label>
+      <input id="calc-a" name="a" type="text" inputmode="decimal" required>
+    </div>
+    <div class="form-group calc-op">
+      <label for="calc-op">Operator</label>
+      <select id="calc-op" name="op">
+        <option value="+">+</option>
+        <option value="-">-</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="calc-b">B</label>
+      <input id="calc-b" name="b" type="text" inputmode="decimal" required>
+    </div>
+    <button class="btn btn-outline btn-sm" type="submit">Calculate</button>
+  </form>
+  <p class="hint">The result is stored as a completed task on this date. Only + and &minus; are allowed.</p>
+  {% endif %}
+</section>
+
 {% if day_events %}
   {% for e in day_events %}
   <div class="card event-card">
     <div class="page-head">
       <strong>{{ e.title }}</strong>
       <span>
-        <span class="badge badge-type-{{ e.event_type }}">{{ type_labels.get(e.event_type, e.event_type) }}</span>
-        {% if e.status == 'completed' %}<span class="badge badge-available">Completed</span>
-        {% elif e.status == 'cancelled' %}<span class="badge badge-inactive">Cancelled</span>
-        {% else %}<span class="badge badge-pending">Pending</span>{% endif %}
+        {{ type_badge(e.event_type, type_labels.get(e.event_type, e.event_type)) }}
+        {{ event_status(e.status) }}
       </span>
     </div>
     <p class="muted small">
@@ -77,21 +170,21 @@
       </form>
       {% endif %}
       <form method="post" action="/calendar/{{ e.id }}/delete"
-            onsubmit="return confirm('Delete this event permanently?');">
+            onsubmit="return confirm('Delete this event permanently? This cannot be undone.');">
         <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-        <button class="btn btn-ghost btn-sm" type="submit">Delete</button>
+        <button class="btn btn-danger btn-sm" type="submit">Delete</button>
       </form>
     </div>
     {% endif %}
   </div>
   {% endfor %}
 {% else %}
-<div class="card empty-state">
+{% call empty_state() %}
   <div class="empty-icon" aria-hidden="true">&#128197;</div>
   <p>No events on this day.</p>
   {% if current_user %}
     <p><a class="btn btn-primary btn-sm" href="/calendar/new?date={{ selected.isoformat() }}">Add an event</a></p>
   {% endif %}
-</div>
+{% endcall %}
 {% endif %}
 {% endblock %}

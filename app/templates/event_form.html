@@ -3,7 +3,7 @@
 {% block content %}
 <p class="muted"><a href="{{ back_target }}">&larr; Back to calendar</a></p>
 
-<div class="auth-card card">
+<div class="form-card card">
   <h1>{{ 'Edit event' if event else 'New event' }}</h1>
 
   {% if form_error %}
@@ -60,7 +60,10 @@
       <p class="muted small">Linked to loan #{{ form.get('loan_id') }}.</p>
     {% endif %}
 
-    <button class="btn btn-primary btn-block" type="submit">{{ submit_label }}</button>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+      <a class="btn btn-ghost" href="{{ back_target }}">Cancel</a>
+    </div>
   </form>
 </div>
 {% endblock %}

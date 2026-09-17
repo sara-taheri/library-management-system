@@ -41,7 +41,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
             email=payload.email,
         )
     except AuthError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=exc.message)
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
     return RegisterResponse(
         message="Account created successfully. You can now log in.",
         user=UserOut.model_validate(user),

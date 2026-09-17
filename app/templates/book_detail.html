@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import badge, book_status %}
 {% block title %}{{ book.title }} &middot; Library Management System{% endblock %}
 {% block content %}
 <p class="muted"><a href="/books">&larr; Back to catalog</a></p>
@@ -6,19 +7,15 @@
 <div class="card">
   <div class="page-head">
     <h1 class="page-title">{{ book.title }}</h1>
-    <div>
-      {% if not book.is_active %}<span class="badge badge-inactive">Deactivated</span>
-      {% elif book.available_copies > 0 %}<span class="badge badge-available">Available</span>
-      {% else %}<span class="badge badge-out">All copies on loan</span>{% endif %}
-    </div>
+    <div>{{ book_status(book, detail=True) }}</div>
   </div>
   <p class="lede">by {{ book.author }}</p>
 
   <table class="kv">
-    <tr><th>Genre</th><td>{{ book.genre or '&mdash;' }}</td></tr>
-    <tr><th>ISBN</th><td>{{ book.isbn or '&mdash;' }}</td></tr>
-    <tr><th>Copies</th><td>{{ book.available_copies }} available of {{ book.total_copies }}</td></tr>
-    <tr><th>Added</th><td>{{ book.created_at.strftime('%Y-%m-%d') }}</td></tr>
+    <tr><th scope="row">Genre</th><td>{{ book.genre or '&mdash;' }}</td></tr>
+    <tr><th scope="row">ISBN</th><td>{{ book.isbn or '&mdash;' }}</td></tr>
+    <tr><th scope="row">Copies</th><td>{{ book.available_copies }} available of {{ book.total_copies }}</td></tr>
+    <tr><th scope="row">Added</th><td>{{ book.created_at.strftime('%Y-%m-%d') }}</td></tr>
   </table>
 
   {% if book.description %}<p>{{ book.description }}</p>{% endif %}
@@ -30,7 +27,7 @@
     <form method="post" action="/books/{{ book.id }}/delete"
           onsubmit="return confirm('Deactivate this book? It will be hidden from the catalog; borrowing history is kept.');">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-      <button class="btn btn-ghost" type="submit">Deactivate</button>
+      <button class="btn btn-danger" type="submit">Deactivate</button>
     </form>
     {% endif %}
   </div>
@@ -41,7 +38,7 @@
     <div class="alert alert-info" role="status">
       You borrowed this book on {{ active_loan.borrowed_at.strftime('%Y-%m-%d') }} &mdash;
       due <strong>{{ active_loan.due_at.strftime('%Y-%m-%d') }}</strong>
-      {% if active_loan.is_overdue %}<span class="badge badge-overdue">Overdue</span>{% endif %}
+      {% if active_loan.is_overdue %}{{ badge("overdue", "Overdue") }}{% endif %}
     </div>
     <form method="post" action="/loans/{{ active_loan.id }}/return" class="btn-row">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">

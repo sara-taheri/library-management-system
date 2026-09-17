@@ -27,6 +27,7 @@ from app.services.auth_service import AuthError
 from app.services.book_service import BookError
 from app.services.event_service import EventError
 from app.services.loan_service import LoanError
+from app.services.runner_service import record_calculation, run_due_tasks
 from app.services.stats_service import library_overview
 from app.utils.csrf import csrf_token_is_valid
 from app.utils.flash import flash
@@ -581,11 +582,15 @@ def admin_loans_page(
     denial = _admin_denial(request, current_user, "/admin")
     if denial is not None:
         return denial
-    if status_filter not in ("", "active", "returned"):
+    if status_filter not in ("", "active", "returned", "overdue"):
         status_filter = ""
+    db_status = "active" if status_filter == "overdue" else (status_filter or None)
     loans, total, _pages = loan_service.list_loans(
-        db, status=status_filter or None, page_size=200
+        db, status=db_status, page_size=200
     )
+    if status_filter == "overdue":
+        loans = [loan for loan in loans if loan.is_overdue]
+        total = len(loans)
     return render(
         request,
         "admin_loans.html",
@@ -656,6 +661,18 @@ def calendar_page(
     prev_year, prev_number = (year - 1, 12) if month_number == 1 else (year, month_number - 1)
     next_year, next_number = (year + 1, 1) if month_number == 12 else (year, month_number + 1)
 
+    if current_user is None:
+        briefing = {"due": [], "borrowed": [], "returned": []}
+    elif current_user.is_admin:
+        briefing = loan_service.activity_on_date(db, selected)
+    else:
+        briefing = loan_service.activity_on_date(
+            db, selected, user_id=current_user.id
+        )
+    pending_tasks = [
+        event for event in day_events if event.status == "pending" and event.is_task
+    ]
+
     return render(
         request,
         "calendar.html",
@@ -672,7 +689,100 @@ def calendar_page(
         prev_month=f"{prev_year:04d}-{prev_number:02d}",
         next_month=f"{next_year:04d}-{next_number:02d}",
         type_labels=event_service.TYPE_LABELS,
+        briefing=briefing,
+        pending_task_count=len(pending_tasks),
     )
+
+
+def _calendar_day_url(day: date) -> str:
+    return f"/calendar?date={day.isoformat()}"
+
+
+def _parse_form_date(raw: str) -> date | None:
+    try:
+        return date.fromisoformat((raw or "").strip())
+    except ValueError:
+        return None
+
+
+@router.post("/calendar/run")
+def calendar_run_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),
+    csrf_token: str = Form("", alias="_csrf"),
+    day_raw: str = Form("", alias="date"),
+):
+    """Run pending runner tasks scheduled on the selected date.
+
+    Reuses ``run_due_tasks`` (same processors as the CLI). Members only
+    execute their own tasks; admins execute every pending task that day.
+    ``now`` is the end of the selected day so a classroom demo can run
+    that date's work without waiting for the real clock.
+    """
+    if current_user is None:
+        return _redirect_to_login(request)
+    selected = _parse_form_date(day_raw) or utcnow().date()
+    target = _calendar_day_url(selected)
+    if not csrf_token_is_valid(request, csrf_token):
+        flash(request, "Your session expired. Please try again.", "error")
+        return RedirectResponse(target, status_code=303)
+
+    end_of_day = datetime.combine(selected, time(23, 59, 59))
+    summary = run_due_tasks(
+        db,
+        now=end_of_day,
+        day=selected,
+        created_by=None if current_user.is_admin else current_user.id,
+    )
+    if summary["due"] == 0:
+        flash(request, "No pending tasks for this date.", "info")
+    else:
+        flash(
+            request,
+            (
+                f"Ran {summary['due']} task"
+                f"{'' if summary['due'] == 1 else 's'} "
+                f"({summary['succeeded']} completed, {summary['failed']} failed)."
+            ),
+            "success" if summary["failed"] == 0 else "warning",
+        )
+    return RedirectResponse(target, status_code=303)
+
+
+@router.post("/calendar/calculate")
+def calendar_calculate_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),
+    csrf_token: str = Form("", alias="_csrf"),
+    day_raw: str = Form("", alias="date"),
+    operand_a: str = Form("", alias="a"),
+    operand_b: str = Form("", alias="b"),
+    operator: str = Form("+", alias="op"),
+):
+    """Store A ± B as a completed calendar task on the selected date."""
+    if current_user is None:
+        return _redirect_to_login(request)
+    selected = _parse_form_date(day_raw) or utcnow().date()
+    target = _calendar_day_url(selected)
+    if not csrf_token_is_valid(request, csrf_token):
+        flash(request, "Your session expired. Please try again.", "error")
+        return RedirectResponse(target, status_code=303)
+    try:
+        event = record_calculation(
+            db,
+            creator=current_user,
+            day=selected,
+            operand_a=operand_a,
+            operand_b=operand_b,
+            operator=operator,
+        )
+    except ValueError as exc:
+        flash(request, str(exc), "error")
+        return RedirectResponse(target, status_code=303)
+    flash(request, event.result_message, "success")
+    return RedirectResponse(target, status_code=303)
 
 
 def _event_form_context(db: Session, current_user: User) -> dict:

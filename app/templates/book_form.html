@@ -3,7 +3,7 @@
 {% block content %}
 <p class="muted"><a href="{{ ('/books/' ~ book.id) if book else '/books' }}">&larr; Back</a></p>
 
-<div class="auth-card card">
+<div class="form-card card">
   <h1>{{ 'Edit book' if book else 'Add a book' }}</h1>
 
   {% if form_error %}
@@ -56,7 +56,10 @@
     </div>
     {% endif %}
 
-    <button class="btn btn-primary btn-block" type="submit">{{ submit_label }}</button>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+      <a class="btn btn-ghost" href="{{ ('/books/' ~ book.id) if book else '/books' }}">Cancel</a>
+    </div>
   </form>
 </div>
 {% endblock %}

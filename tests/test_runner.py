@@ -14,7 +14,7 @@ import pytest
 from sqlalchemy import select
 
 from app.database import utcnow
-from app.models import CalendarEvent, EventStatus, Loan, User
+from app.models import CalendarEvent, EventStatus, User
 from app.services import event_service, loan_service
 from app.services.runner_service import DEFAULT_PROCESSORS, find_due_events, run_due_tasks
 from tests.conftest import make_user
@@ -100,7 +100,7 @@ def test_successful_execution_marks_completed(db):
 
 def test_completed_events_never_run_twice(db):
     event = _make_event(db)
-    first = run_due_tasks(db)
+    run_due_tasks(db)
     db.refresh(event)
     first_executed_at = event.executed_at
     first_message = event.result_message

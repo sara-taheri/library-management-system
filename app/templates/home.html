@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}Home &middot; Library Management System{% endblock %}
 {% block content %}
 <section class="hero card">
   <h1>Welcome to your Library</h1>
@@ -11,23 +12,24 @@
   {% else %}
     <div class="btn-row">
       <a class="btn btn-primary" href="/account">Go to my dashboard</a>
+      <a class="btn btn-outline" href="/books">Browse the catalog</a>
     </div>
   {% endif %}
 </section>
 
-<section class="grid-3">
-  <div class="card">
-    <h2>&#128214; Catalog</h2>
+<section class="grid-3" aria-label="What you can do">
+  <div class="card feature-card">
+    <h2>Catalog</h2>
     <p>Search, filter and browse available books.</p>
     <p><a class="btn btn-outline btn-sm" href="/books">Browse the catalog</a></p>
   </div>
-  <div class="card">
-    <h2>&#128257; Borrowing</h2>
+  <div class="card feature-card">
+    <h2>Borrowing</h2>
     <p>Due dates, returns and full borrowing history.</p>
     <p class="muted small">Borrow from any book page and track loans on your <a href="/account">dashboard</a>.</p>
   </div>
-  <div class="card">
-    <h2>&#128197; Calendar</h2>
+  <div class="card feature-card">
+    <h2>Calendar</h2>
     <p>Reminders and scheduled library activities.</p>
     <p><a class="btn btn-outline btn-sm" href="/calendar">Open the calendar</a></p>
   </div>

@@ -1,16 +1,41 @@
 {% extends "base.html" %}
+{% from "macros.html" import badge, type_badge, event_status, empty_state %}
 {% block title %}My account &middot; Library Management System{% endblock %}
 {% block content %}
-<h1 class="page-title">My account</h1>
+<header class="page-head">
+  <h1 class="page-title">My account</h1>
+  <div class="btn-row">
+    <a class="btn btn-outline btn-sm" href="/books">Browse catalog</a>
+    <a class="btn btn-primary btn-sm" href="/calendar">Open calendar</a>
+    {% if current_user.is_admin %}
+      <a class="btn btn-outline btn-sm" href="/admin">Admin overview</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="stats-grid" aria-label="My library summary">
+  <div class="card stat">
+    <span class="stat-value">{{ loans_active|length }}</span>
+    <span class="stat-label">Active loans</span>
+  </div>
+  <div class="card stat">
+    <span class="stat-value{% if loans_active|selectattr('is_overdue')|list %} stat-value-danger{% endif %}">{{ loans_active|selectattr('is_overdue')|list|length }}</span>
+    <span class="stat-label">Overdue</span>
+  </div>
+  <div class="card stat">
+    <span class="stat-value">{{ upcoming_events|length }}</span>
+    <span class="stat-label">Upcoming events</span>
+  </div>
+</div>
 
 <div class="grid-2">
   <div class="card">
     <h2>Profile</h2>
     <table class="kv">
-      <tr><th>Username</th><td>{{ current_user.username }}</td></tr>
-      <tr><th>Email</th><td>{{ current_user.email or '&mdash;' }}</td></tr>
-      <tr><th>Role</th><td><span class="badge badge-{{ current_user.role }}">{{ current_user.role }}</span></td></tr>
-      <tr><th>Member since</th><td>{{ current_user.created_at.strftime('%Y-%m-%d') }}</td></tr>
+      <tr><th scope="row">Username</th><td>{{ current_user.username }}</td></tr>
+      <tr><th scope="row">Email</th><td>{{ current_user.email or '&mdash;' }}</td></tr>
+      <tr><th scope="row">Role</th><td>{{ badge(current_user.role, current_user.role) }}</td></tr>
+      <tr><th scope="row">Member since</th><td>{{ current_user.created_at.strftime('%Y-%m-%d') }}</td></tr>
     </table>
   </div>
   <div class="card">
@@ -21,12 +46,20 @@
   </div>
 </div>
 
-<h2>Currently borrowed</h2>
+<section class="section" aria-labelledby="active-loans-heading">
+<h2 id="active-loans-heading">Currently borrowed</h2>
 {% if loans_active %}
 <div class="card">
+  <div class="table-wrap">
   <table class="table-list">
     <thead>
-      <tr><th>Book</th><th>Borrowed</th><th>Due</th><th>Status</th><th></th></tr>
+      <tr>
+        <th scope="col">Book</th>
+        <th scope="col">Borrowed</th>
+        <th scope="col">Due</th>
+        <th scope="col">Status</th>
+        <th scope="col"><span class="visually-hidden">Actions</span></th>
+      </tr>
     </thead>
     <tbody>
       {% for loan in loans_active %}
@@ -35,8 +68,8 @@
         <td>{{ loan.borrowed_at.strftime('%Y-%m-%d') }}</td>
         <td>{{ loan.due_at.strftime('%Y-%m-%d') }}</td>
         <td>
-          {% if loan.is_overdue %}<span class="badge badge-overdue">Overdue</span>
-          {% else %}<span class="badge badge-available">On time</span>{% endif %}
+          {% if loan.is_overdue %}{{ badge("overdue", "Overdue") }}
+          {% else %}{{ badge("available", "On time") }}{% endif %}
         </td>
         <td>
           <form method="post" action="/loans/{{ loan.id }}/return">
@@ -49,20 +82,29 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% else %}
-<div class="card empty-state">
+{% call empty_state() %}
   <p class="empty-icon" aria-hidden="true">&#128237;</p>
   <p>Nothing borrowed right now &mdash; <a href="/books">browse the catalog</a>.</p>
-</div>
+{% endcall %}
 {% endif %}
+</section>
 
-<h2>Borrowing history</h2>
+<section class="section" aria-labelledby="history-heading">
+<h2 id="history-heading">Borrowing history</h2>
 {% if loans_history %}
 <div class="card">
+  <div class="table-wrap">
   <table class="table-list">
     <thead>
-      <tr><th>Book</th><th>Borrowed</th><th>Due</th><th>Returned</th></tr>
+      <tr>
+        <th scope="col">Book</th>
+        <th scope="col">Borrowed</th>
+        <th scope="col">Due</th>
+        <th scope="col">Returned</th>
+      </tr>
     </thead>
     <tbody>
       {% for loan in loans_history %}
@@ -75,39 +117,46 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% else %}
 <p class="muted small">Returned books will appear here.</p>
 {% endif %}
+</section>
 
-<h2>Upcoming schedule</h2>
+<section class="section" aria-labelledby="schedule-heading">
+<h2 id="schedule-heading">Upcoming schedule</h2>
 {% if upcoming_events %}
 <div class="card">
+  <div class="table-wrap">
   <table class="table-list">
     <thead>
-      <tr><th>When</th><th>Event</th><th>Type</th><th>Status</th></tr>
+      <tr>
+        <th scope="col">When</th>
+        <th scope="col">Event</th>
+        <th scope="col">Type</th>
+        <th scope="col">Status</th>
+      </tr>
     </thead>
     <tbody>
       {% for e in upcoming_events %}
       <tr>
         <td>{{ e.event_date.strftime('%Y-%m-%d %H:%M') }}</td>
         <td><a href="/calendar?date={{ e.event_date.date().isoformat() }}">{{ e.title }}</a></td>
-        <td><span class="badge badge-type-{{ e.event_type }}">{{ e.event_type.replace('_', ' ') }}</span></td>
-        <td>
-          {% if e.status == 'completed' %}<span class="badge badge-available">Completed</span>
-          {% elif e.status == 'cancelled' %}<span class="badge badge-inactive">Cancelled</span>
-          {% else %}<span class="badge badge-pending">Pending</span>{% endif %}
-        </td>
+        <td>{{ type_badge(e.event_type) }}</td>
+        <td>{{ event_status(e.status) }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
   <p class="muted small"><a href="/calendar">Open the calendar</a></p>
 </div>
 {% else %}
-<div class="card empty-state">
+{% call empty_state() %}
   <p class="empty-icon" aria-hidden="true">&#128197;</p>
   <p>Nothing scheduled yet &mdash; <a href="/calendar">open the calendar</a> to add events.</p>
-</div>
+{% endcall %}
 {% endif %}
+</section>
 {% endblock %}

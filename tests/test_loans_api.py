@@ -11,7 +11,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from app.config import settings
-from app.database import utcnow
 from app.models import (
     Book,
     CalendarEvent,
